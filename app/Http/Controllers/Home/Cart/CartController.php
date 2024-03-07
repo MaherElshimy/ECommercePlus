@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Home\HomeController;
 use App\Http\Controllers\Home\OrderController;
+use App\Interfaces\Home\Cart\CartRepositoryInterface;
+use App\Interfaces\Home\Order\OrderRepositoryInterface;
 
 use Illuminate\Support\Facades\Auth ;
 
@@ -25,16 +27,21 @@ use RealRashid\SweetAlert\Facades\Alert;
 class CartController extends Controller
 {
 
-
     private $user;
+    private $cartRepository;
+    private $orderRepository;
 
-    public function __construct()
+    public function __construct(CartRepositoryInterface $cartRepository, OrderRepositoryInterface $orderRepository)
     {
         $this->middleware(function ($request, $next) {
             $this->user = Auth::user();
             return $next($request);
         });
+
+        $this->cartRepository = $cartRepository;
+        $this->orderRepository = $orderRepository;
     }
+
     /**
      * Create an order.
      *
@@ -44,8 +51,7 @@ class CartController extends Controller
      */
     private function createOrder($cart, $paymentStatus)
     {
-        $order = new Order;
-        $order->fill([
+        $orderData = [
             'name' => $cart->name,
             'email' => $cart->email,
             'phone' => $cart->phone,
@@ -58,9 +64,10 @@ class CartController extends Controller
             'product_id' => $cart->product_id,
             'payment_status' => $paymentStatus,
             'delivery_status' => 'processing',
-        ])->save();
-    }
+        ];
 
+        $this->orderRepository->create($orderData);
+    }
 /**
  * Add a product to the shopping cart.
  *
@@ -73,10 +80,10 @@ public function addCart(Request $request, $id)
     if ($this->user) {
         $product = Product::find($id);
         $userId = $this->user->id;
-        $productExistId = Cart::where('product_id', '=', $id)->where('user_id', '=', $userId)->value('id');
+        $productExistId = $this->cartRepository->findCartByProductIdAndUserId($id, $userId);
 
         if ($productExistId) {
-            $cart = Cart::find($productExistId);
+            $cart = $this->cartRepository->find($productExistId);
             $quantity = $cart->quantity;
             $cart->quantity = $quantity + $request->quantity;
 
@@ -84,11 +91,10 @@ public function addCart(Request $request, $id)
                 ? $product->discount_price * $cart->quantity
                 : $product->price * $cart->quantity;
 
-            $cart->save();
+            $this->cartRepository->save($cart);
             Alert::success('Product Added Successfully', 'We have added the product to the cart');
         } else {
-            $cart = new Cart;
-            $cart->fill([
+            $cartData = [
                 'name' => $this->user->name,
                 'email' => $this->user->email,
                 'phone' => $this->user->phone,
@@ -101,8 +107,9 @@ public function addCart(Request $request, $id)
                 'image' => $product->image,
                 'product_id' => $product->id,
                 'quantity' => $request->quantity,
-            ])->save();
+            ];
 
+            $this->cartRepository->create($cartData);
             Alert::success('Product Added Successfully', 'We have added the product to the cart');
         }
 
@@ -111,6 +118,7 @@ public function addCart(Request $request, $id)
         return redirect()->route('login');
     }
 }
+
 
     /**
      * Show the shopping cart.
@@ -138,10 +146,9 @@ public function addCart(Request $request, $id)
 
      public function removeCart($id)
      {
-         Cart::find($id)->delete();
+         $this->cartRepository->find($id)->delete();
          return redirect()->back();
-        }
-
+     }
 
 
     /**
@@ -156,7 +163,7 @@ public function addCart(Request $request, $id)
 
         foreach ($carts as $cart) {
             $this->createOrder($cart, 'cash on delivery');
-            $cart->delete();
+            $this->cartRepository->find($cart->id)->delete();
         }
 
         return redirect()->back()->with('message', 'We have Received Your Order. We will connect with you Soon....');

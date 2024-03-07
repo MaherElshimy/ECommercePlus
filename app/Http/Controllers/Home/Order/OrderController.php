@@ -20,15 +20,17 @@ class OrderController extends Controller
 {
 
     private $user;
+    private $orderRepository;
 
-    public function __construct()
+    public function __construct(OrderRepositoryInterface $orderRepository)
     {
         $this->middleware(function ($request, $next) {
             $this->user = Auth::user();
             return $next($request);
         });
-    }
 
+        $this->orderRepository = $orderRepository;
+    }
 
     /**
      * Show the user's order history.
@@ -38,14 +40,13 @@ class OrderController extends Controller
     public function showOrderHistory()
     {
         if ($this->user) {
-            $user_id = $this->user->id;
-            $data_order = Order::where('user_id', '=', $user_id)->get();
-            return view('home.order', compact('data_order'));
+            $userId = $this->user->id;
+            $dataOrder = $this->orderRepository->getUserOrders($userId);
+            return view('home.order', compact('dataOrder'));
         } else {
             return redirect('login');
         }
     }
-
 
     /**
      * Cancel an order.
@@ -55,10 +56,7 @@ class OrderController extends Controller
      */
     public function cancelOrder($id)
     {
-        $order = Order::find($id);
-        $order->delivery_status = "You Canceled the order";
-        $order->save();
+        $this->orderRepository->cancelOrder($id);
         return redirect()->back();
     }
-
 }

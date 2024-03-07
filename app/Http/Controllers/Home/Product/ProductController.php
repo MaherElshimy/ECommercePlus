@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Home\Product;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Auth ;
+use App\Interfaces\Home\Product\ProductRepositoryInterface;
 
 use App\Models\User ;
 use App\Models\Product ;
@@ -18,13 +18,16 @@ use App\Models\Reply ;
 class ProductController extends Controller
 {
     private $user;
+    private $productRepository;
 
-    public function __construct()
+    public function __construct(ProductRepositoryInterface $productRepository)
     {
         $this->middleware(function ($request, $next) {
             $this->user = Auth::user();
             return $next($request);
         });
+
+        $this->productRepository = $productRepository;
     }
 
 
@@ -37,14 +40,14 @@ class ProductController extends Controller
 
      public function viewAllProducts()
      {
-         $product = Product::paginate(6);
+         $product = $this->productRepository->getAllProducts();
          $comment = Comment::orderBy('id', 'desc')->get();
          $reply = Reply::all();
 
          return view('home.userpage', compact('product', 'comment', 'reply'));
      }
 
-         /**
+    /**
      * Display details of a product.
      *
      * @param  int  $id
@@ -53,14 +56,10 @@ class ProductController extends Controller
 
      public function productDetails($id)
      {
-         $product = Product::find($id);
+         $product = $this->productRepository->getProductDetails($id);
 
          return view('home.product_details', compact('product'));
      }
-
-
-
-
 
 
 
@@ -69,31 +68,31 @@ class ProductController extends Controller
          $searchText = $request->search;
          $comment = Comment::orderBy('id', 'desc')->get();
          $reply = Reply::all();
-         $product = Product::where('title', 'LIKE', "%$searchText%")->orWhere('catagory', 'LIKE', "%$searchText%")->paginate(10);
+         $product = $this->productRepository->searchProducts($searchText);
+
          return view('home.userpage', compact('product', 'comment', 'reply'));
      }
 
 
 
+     public function products()
+     {
+         $product = $this->productRepository->getAllFeaturedProducts();
+         $comment = Comment::orderBy('id', 'desc')->get();
+         $reply = Reply::all();
 
-    public function products()
-    {
-        $product = Product::paginate(9);
-        $comment = Comment::orderBy('id', 'desc')->get();
-        $reply = Reply::all();
-        return view('home.all_product', compact('product', 'comment', 'reply'));
-    }
+         return view('home.all_product', compact('product', 'comment', 'reply'));
+     }
 
+     public function searchProduct(Request $request)
+     {
+         $searchText = $request->search;
+         $comment = Comment::orderBy('id', 'desc')->get();
+         $reply = Reply::all();
+         $product = $this->productRepository->searchProducts($searchText);
 
+         return view('home.all_product', compact('product', 'comment', 'reply'));
+     }
 
-
-    public function searchProduct(Request $request)
-    {
-        $searchText = $request->search;
-        $comment = Comment::orderBy('id', 'desc')->get();
-        $reply = Reply::all();
-        $product = Product::where('title', 'LIKE', "%$searchText%")->orWhere('catagory', 'LIKE', "%$searchText%")->paginate(10);
-        return view('home.all_product', compact('product', 'comment', 'reply'));
-    }
 
 }

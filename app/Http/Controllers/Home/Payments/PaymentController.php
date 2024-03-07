@@ -2,23 +2,30 @@
 
 namespace App\Http\Controllers\Home\Payments;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 
+use App\Interfaces\Home\Payments\PaymentRepositoryInterface;
+use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth ;
 use App\Models\User ;
+use App\Models\Cart;
+
 use Stripe;
+use Session;
 
 class PaymentController extends Controller
 {
     private $user;
+    private $paymentRepository;
 
-    public function __construct()
+    public function __construct(PaymentRepositoryInterface $paymentRepository)
     {
         $this->middleware(function ($request, $next) {
-            $this->user = Auth::user();
+            $this->user = auth()->user();
             return $next($request);
         });
+
+        $this->paymentRepository = $paymentRepository;
     }
 
     /**
@@ -32,7 +39,7 @@ class PaymentController extends Controller
         return view('home.stripe', compact('totalPrice'));
     }
 
-        /**
+    /**
      * Process a Stripe payment.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -41,26 +48,15 @@ class PaymentController extends Controller
      */
     public function processStripePayment(Request $request, $totalPrice)
     {
-        Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
-        Stripe\Charge::create([
-            "amount" => $totalPrice * 100,
-            "currency" => "usd",
-            "source" => $request->stripeToken,
-            "description" => "Thanks For Payment."
-        ]);
-
+        $stripeToken = $request->stripeToken;
         $userId = $this->user->id;
-        $carts = Cart::where('user_id', '=', $userId)->get();
 
-        foreach ($carts as $cart) {
-            $this->createOrder($cart, 'Paid');
-            $cart->delete();
+        if ($this->paymentRepository->processStripePayment($stripeToken, $totalPrice, $userId)) {
+            Session::flash('success', 'Payment successful!');
+            return back();
+        } else {
+            Session::flash('error', 'Payment failed!');
+            return back();
         }
-
-        Session::flash('success', 'Payment successful!');
-        return back();
     }
-
-
-
 }

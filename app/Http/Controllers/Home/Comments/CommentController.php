@@ -1,32 +1,33 @@
 <?php
 
+// app/Http/Controllers/Home/Comments/CommentController.php
+
 namespace App\Http\Controllers\Home\Comments;
 
 use App\Http\Controllers\Controller;
-use App\Http\Controllers\Home\HomeController;
 use Illuminate\Http\Request;
-
-use Illuminate\Support\Facades\Auth ;
-
-
-use App\Models\User ;
-use App\Models\Product ;
-use App\Models\Comment ;
-use App\Models\Reply ;
-
-
+use App\Interfaces\Home\Comment\CommentRepositoryInterface;
+use App\Interfaces\Home\Comment\ReplyRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
 
 class CommentController extends Controller
 {
     private $user;
-    public function __construct()
-    {
+    private $commentRepository;
+    private $replyRepository;
+
+    public function __construct(
+        CommentRepositoryInterface $commentRepository,
+        ReplyRepositoryInterface $replyRepository
+    ) {
         $this->middleware(function ($request, $next) {
             $this->user = Auth::user();
             return $next($request);
         });
-    }
 
+        $this->commentRepository = $commentRepository;
+        $this->replyRepository = $replyRepository;
+    }
 
     /**
      * Add a comment to a product.
@@ -37,11 +38,13 @@ class CommentController extends Controller
     public function addComment(Request $request)
     {
         if ($this->user) {
-            $comment = new Comment;
-            $comment->name = $this->user->name;
-            $comment->user_id = $this->user->id;
-            $comment->comment = $request->comment;
-            $comment->save();
+            $commentData = [
+                'name' => $this->user->name,
+                'user_id' => $this->user->id,
+                'comment' => $request->comment,
+            ];
+
+            $this->commentRepository->create($commentData);
 
             return redirect()->back();
         } else {
@@ -49,7 +52,7 @@ class CommentController extends Controller
         }
     }
 
-        /**
+    /**
      * Add a reply to a comment.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -58,18 +61,20 @@ class CommentController extends Controller
     public function addReply(Request $request)
     {
         if ($this->user) {
-            $reply = new Reply;
-            $reply->name = $this->user->name;
-            $reply->user_id = $this->user->id;
-            $reply->comment_id = $request->commentId;
-            $reply->reply = $request->reply;
-            $reply->save();
+            $replyData = [
+                'name' => $this->user->name,
+                'user_id' => $this->user->id,
+                'comment_id' => $request->commentId,
+                'reply' => $request->reply,
+            ];
+
+            $this->replyRepository->create($replyData);
 
             return redirect()->back();
         } else {
             return redirect('login');
         }
     }
-
-
 }
+
+?>
