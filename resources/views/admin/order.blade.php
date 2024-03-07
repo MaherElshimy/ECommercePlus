@@ -74,7 +74,7 @@
                 </thead>
                 <tbody>
                     <!-- Loop through orders and display each row -->
-                    @forelse($order as $order)
+                    @forelse($orders as $order)
                         <tr>
                             <td>{{ $order->name }}</td>
                             <td>{{ $order->email }}</td>

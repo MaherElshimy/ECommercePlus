@@ -113,7 +113,7 @@
                     <select name="catagory" required>
                         <option value="{{ $product->catagory }}" selected="">{{ $product->catagory }}</option>
 
-                        @foreach($catagories as $category)
+                        @foreach($categories as $category)
                         <option value="{{ $category->catagory_name }}">{{ $category->catagory_name }}</option>
                         @endforeach
                         <!-- Add more categories as needed -->

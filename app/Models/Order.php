@@ -11,4 +11,20 @@ class Order extends Model
     use HasFactory;
 
     use Notifiable;
+
+    protected $fillable = [
+        'name',
+        'email',
+        'phone',
+        'address',
+        'user_id',
+        'product_title',
+        'price',
+        'quantity',
+        'image',
+        'product_id',
+        'payment_status',
+        'delivery_status',
+    ];
+
 }

@@ -39,26 +39,26 @@
         <h1>Order Details</h1>
 
         <div class="order-details">
-            <h3>Customer name : {{ $order_data->name }}</h3>
-            <p>Customer Email: {{ $order_data->email }}</p>
-            <p>Customer Phone: {{ $order_data->phone }}</p>
-            <p>Customer Address: {{ $order_data->address }}</p>
-            <p>Customer ID: {{ $order_data->user_id }}</p>
+            <h3>Customer name : {{ $orderData->name }}</h3>
+            <p>Customer Email: {{ $orderData->email }}</p>
+            <p>Customer Phone: {{ $orderData->phone }}</p>
+            <p>Customer Address: {{ $orderData->address }}</p>
+            <p>Customer ID: {{ $orderData->user_id }}</p>
 
             <hr>
 
             <h4>Product Information</h4>
-            <p>Product Name: {{ $order_data->product_title }}</p>
-            <p>Product Quantity: {{ $order_data->quantity }}</p>
-            <p>Product Price: ${{ $order_data->price }}</p>
-            <p>Product Image: <img class="product-image" src="{{ public_path('product/' . $order_data->image) }}" alt="Product Image"></p>
-            <p>Product ID: {{ $order_data->product_id }}</p>
+            <p>Product Name: {{ $orderData->product_title }}</p>
+            <p>Product Quantity: {{ $orderData->quantity }}</p>
+            <p>Product Price: ${{ $orderData->price }}</p>
+            <p>Product Image: <img class="product-image" src="{{ public_path('product/' . $orderData->image) }}" alt="Product Image"></p>
+            <p>Product ID: {{ $orderData->product_id }}</p>
 
             <hr>
 
             <h4>Order Status</h4>
-            <p>Payment Status: {{ $order_data->payment_status }}</p>
-            <p>Delivery Status: {{ $order_data->delivery_status }}</p>
+            <p>Payment Status: {{ $orderData->payment_status }}</p>
+            <p>Delivery Status: {{ $orderData->delivery_status }}</p>
         </div>
     </div>
 </body>

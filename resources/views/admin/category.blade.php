@@ -112,12 +112,12 @@
                     <tbody>
                         <!-- Dummy data for illustration -->
 
-                        @foreach($data as $data)
+                        @foreach($categories as $categorie)
                         <tr class="category">
-                            <td> {{ $data->catagory_name }}</td>
+                            <td> {{ $categorie->catagory_name }}</td>
                             <td>
 
-                                <a onclick="return confirm('Are You Sure To Delete This')" class="delete-btn" href="{{ url ('delete_catagory' , $data->id) }}">Delete</a>
+                                <a onclick="return confirm('Are You Sure To Delete This')" class="delete-btn" href="{{ url ('delete_catagory' , $categorie->id) }}">Delete</a>
                             </td>
                         </tr>
                         @endforeach
