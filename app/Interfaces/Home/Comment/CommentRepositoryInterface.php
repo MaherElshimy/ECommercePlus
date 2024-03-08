@@ -8,6 +8,7 @@ namespace App\Interfaces\Home\Comment;
 interface CommentRepositoryInterface
 {
     public function create(array $data);
+    public function getAllComments();
 
 }
 

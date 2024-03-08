@@ -13,7 +13,12 @@ class CommentRepository implements CommentRepositoryInterface
         return Comment::create($data);
     }
 
-    // Implement other methods as needed
+    public function getAllComments()
+    {
+        return Comment::orderBy('id', 'desc')->get();
+    }
+
+
 }
 
 ?>

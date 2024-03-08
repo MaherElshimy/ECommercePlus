@@ -4,58 +4,52 @@ namespace App\Http\Controllers\Admin\EmailAndPdf;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth ;
-use App\Notifications\SendEmailNotification;
-
+use App\Interfaces\Admin\EmailAndPdf\AdminPdfRepositoryInterface;
+use App\Interfaces\Admin\EmailAndPdf\AdminEmailRepositoryInterface;
+use App\Interfaces\Admin\Order\AdminOrderRepositoryInterface;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 use App\Models\Order;
-use PDF;
-use Notification;
-
 
 class EmailAndPdfController extends Controller
 {
+    private $pdfRepository;
+    private $emailRepository;
+    private $orderRepository;
 
-    private function checkAuthentication()
-    {
-        if (!Auth::id()) {
-            return redirect('login');
-        }
+    public function __construct(
+        AdminPdfRepositoryInterface $pdfRepository,
+        AdminEmailRepositoryInterface $emailRepository,
+        AdminOrderRepositoryInterface $orderRepository
+    ) {
+        $this->middleware(function ($request, $next) {
+            if (!Auth::id()) {
+                return redirect('login');
+            }
+            return $next($request);
+        });
+
+        $this->pdfRepository = $pdfRepository;
+        $this->emailRepository = $emailRepository;
+        $this->orderRepository = $orderRepository;
     }
-
 
     public function printPdf($orderId)
     {
-        $this->checkAuthentication();
-
-        $orderData = Order::find($orderId);
-        $pdf = PDF::loadView('admin.pdf', compact('orderData'));
-
-        return $pdf->download('order_details.pdf');
+        return $this->pdfRepository->generatePdf($orderId);
     }
-
-
 
     public function sendEmail($orderId)
     {
-        $this->checkAuthentication();
-
-        $order = Order::find($orderId);
-
+        $order = $this->orderRepository->findOrderById($orderId);
         return view('admin.email_info', compact('order'));
     }
 
-
-
     public function sendUserEmail(Request $request, $orderId)
     {
-        $this->checkAuthentication();
+        $details = new Collection($request->only(['greeting', 'firstline', 'body', 'button', 'url', 'lastline']));
+        $this->emailRepository->sendEmail($orderId, $details);
+        return redirect()->back()->with('message', 'Email sent successfully');
 
-        $order = Order::find($orderId);
-        $details = $request->only(['greeting', 'firstline', 'body', 'button', 'url', 'lastline']);
-
-        Notification::send($order, new SendEmailNotification($details));
-
-        return redirect()->back();
     }
-
 }

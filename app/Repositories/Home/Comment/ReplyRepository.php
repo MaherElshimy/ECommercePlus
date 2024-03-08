@@ -11,6 +11,10 @@ class ReplyRepository implements ReplyRepositoryInterface
     {
         return Reply::create($data);
     }
+    public function getAllReplies()
+    {
+        return Reply::all();
+    }
 
 }
 

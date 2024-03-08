@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Home\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth ;
+
 use App\Interfaces\Home\Product\ProductRepositoryInterface;
+use App\Interfaces\Home\Comment\CommentRepositoryInterface;
+use App\Interfaces\Home\Comment\ReplyRepositoryInterface;
 
 use App\Models\User ;
 use App\Models\Product ;
@@ -19,80 +22,70 @@ class ProductController extends Controller
 {
     private $user;
     private $productRepository;
+    private $commentRepository;
+    private $replyRepository;
 
-    public function __construct(ProductRepositoryInterface $productRepository)
-    {
+    public function __construct(
+        ProductRepositoryInterface $productRepository,
+        CommentRepositoryInterface $commentRepository,
+        ReplyRepositoryInterface $replyRepository
+    ) {
         $this->middleware(function ($request, $next) {
             $this->user = Auth::user();
             return $next($request);
         });
 
         $this->productRepository = $productRepository;
+        $this->commentRepository = $commentRepository;
+        $this->replyRepository = $replyRepository;
     }
 
 
 
-     /**
-     * Show the home page for users.
-     *
-     * @return \Illuminate\View\View
-     */
+    public function viewAllProducts()
+    {
+        $product = $this->productRepository->getAllProducts();
+        $comment = $this->commentRepository->getAllComments();
+        $reply = $this->replyRepository->getAllReplies();
 
-     public function viewAllProducts()
-     {
-         $product = $this->productRepository->getAllProducts();
-         $comment = Comment::orderBy('id', 'desc')->get();
-         $reply = Reply::all();
+        return view('home.userpage', compact('product', 'comment', 'reply'));
+    }
 
-         return view('home.userpage', compact('product', 'comment', 'reply'));
-     }
+    public function productDetails($id)
+    {
+        $product = $this->productRepository->getProductDetails($id);
 
-    /**
-     * Display details of a product.
-     *
-     * @param  int  $id
-     * @return \Illuminate\View\View
-     */
-
-     public function productDetails($id)
-     {
-         $product = $this->productRepository->getProductDetails($id);
-
-         return view('home.product_details', compact('product'));
-     }
+        return view('home.product_details', compact('product'));
+    }
 
 
+    public function productSearch(Request $request)
+    {
+        $searchText = $request->search;
+        $comment = $this->commentRepository->getAllComments();
+        $reply = $this->replyRepository->getAllReplies();
+        $product = $this->productRepository->searchProducts($searchText);
 
-     public function productSearch(Request $request)
-     {
-         $searchText = $request->search;
-         $comment = Comment::orderBy('id', 'desc')->get();
-         $reply = Reply::all();
-         $product = $this->productRepository->searchProducts($searchText);
+        return view('home.userpage', compact('product', 'comment', 'reply'));
+    }
 
-         return view('home.userpage', compact('product', 'comment', 'reply'));
-     }
+    public function products()
+    {
+        $product = $this->productRepository->getAllFeaturedProducts();
+        $comment = $this->commentRepository->getAllComments();
+        $reply = $this->replyRepository->getAllReplies();
 
+        return view('home.all_product', compact('product', 'comment', 'reply'));
+    }
 
+    public function searchProduct(Request $request)
+    {
+        $searchText = $request->search;
+        $comment = $this->commentRepository->getAllComments();
+        $reply = $this->replyRepository->getAllReplies(); // Adjust accordingly
+        $product = $this->productRepository->searchProducts($searchText);
 
-     public function products()
-     {
-         $product = $this->productRepository->getAllFeaturedProducts();
-         $comment = Comment::orderBy('id', 'desc')->get();
-         $reply = Reply::all();
-
-         return view('home.all_product', compact('product', 'comment', 'reply'));
-     }
-
-     public function searchProduct(Request $request)
-     {
-         $searchText = $request->search;
-         $comment = Comment::orderBy('id', 'desc')->get();
-         $reply = Reply::all();
-         $product = $this->productRepository->searchProducts($searchText);
-
-         return view('home.all_product', compact('product', 'comment', 'reply'));
-     }
-
+        return view('home.all_product', compact('product', 'comment', 'reply'));
+    }
 
 }

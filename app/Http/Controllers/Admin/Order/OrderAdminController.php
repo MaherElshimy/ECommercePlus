@@ -7,49 +7,50 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth ;
 use App\Models\Product;
 use App\Models\Order;
+use App\Interfaces\Admin\Order\AdminOrderRepositoryInterface;
 
 class OrderAdminController extends Controller
 {
+    private $orderRepository;
+
+    public function __construct(AdminOrderRepositoryInterface $orderRepository)
+    {
+        $this->orderRepository = $orderRepository;
+    }
+
     private function checkAuthentication()
     {
-        if (!Auth::id()) {
+        if (!auth()->check()) {
             return redirect('login');
         }
     }
-
-
 
     public function order()
     {
         $this->checkAuthentication();
 
-        $orders = Order::all();
+        $orders = $this->orderRepository->getAllOrders();
 
         return view('admin.order', compact('orders'));
     }
-
-
 
     public function delivered($orderId)
     {
         $this->checkAuthentication();
 
-        $order = Order::find($orderId);
-        $order->update(['delivery_status' => 'delivered', 'payment_status' => 'Paid']);
+        $this->orderRepository->updateOrderStatus($orderId, 'delivered', 'Paid');
 
         return redirect()->back();
     }
-
 
     public function searchData(Request $request)
     {
         $this->checkAuthentication();
 
         $searchText = $request->search;
-        $orders = Order::where('name', 'LIKE', "%$searchText")->orWhere('phone', 'LIKE', "%$searchText")
-            ->orWhere('product_title', 'LIKE', "%$searchText")->get();
+        $orders = $this->orderRepository->searchOrders($searchText);
 
         return view('admin.order', compact('orders'));
     }
-
 }
+?>

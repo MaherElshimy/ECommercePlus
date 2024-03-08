@@ -107,8 +107,8 @@
                     <label for="category">Product Category:</label>
                     <select name="catagory" required>
                         <option value="" selected disabled>Select Category</option>
-                        @foreach($catagory as $catagory)
-                        <option value="{{ $catagory->catagory_name }}">{{ $catagory->catagory_name }}</option>
+                        @foreach($categories as $category)
+                        <option value="{{ $category->catagory_name }}">{{ $category->catagory_name }}</option>
                         @endforeach
                         <!-- Add more categories as needed -->
                     </select>
